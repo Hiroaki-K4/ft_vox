@@ -13,14 +13,14 @@
 #include "stb_image.h"
 
 
-glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+glm::vec3 cameraPos = glm::vec3(32.0f, 16.0f, 32.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
 float deltaTime = 0.0f; // Time between current frame and last frame
 float lastFrame = 0.0f; // Time of last frame
 
-float yaw = -90.0f, pitch = 0.0f;
+float yaw = -120.0f, pitch = -30.0f;
 float lastX = 400, lastY = 300;
 bool firstMouse = true;
 float fov = 45.0f;
@@ -96,8 +96,13 @@ void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
 }
 
 void create_cube_positions(std::vector<glm::vec3> &cube_positions, float side_size) {
-    for (float i = -8; i++; i <= side_size + 0.5) {
-        std::cout << "i: " << i << std::endl;
+    int count = 0;
+    for (float i = -side_size + 0.5; i < side_size; i++) {
+        for (float j = -side_size + 0.5; j < side_size; j++) {
+            for (float k = -side_size + 0.5; k < side_size; k++) {
+                cube_positions.push_back(glm::vec3(i, j, k));
+            }
+        }
     }
 }
 
@@ -293,9 +298,9 @@ int main() {
         unsigned int modelLoc = glGetUniformLocation(ourShader.ID, "model");
         unsigned int viewLoc = glGetUniformLocation(ourShader.ID, "view");
         unsigned int projLoc = glGetUniformLocation(ourShader.ID, "projection");
-        for (unsigned int i = 0; i < cubePositions.size(); i++) {
+        for (unsigned int i = 0; i < cube_positions.size(); i++) {
             glm::mat4 model = glm::mat4(1.0f);
-            model = glm::translate(model, cubePositions[i]);
+            model = glm::translate(model, cube_positions[i]);
             float angle = 20.0f * i;
             glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
             glDrawArrays(GL_TRIANGLES, 0, 36);
