@@ -7,7 +7,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <vector>
 
-#include "shader.h"
+#include "Shader.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
