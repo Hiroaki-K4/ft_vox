@@ -298,20 +298,18 @@ int main() {
         unsigned int modelLoc = glGetUniformLocation(ourShader.ID, "model");
         unsigned int viewLoc = glGetUniformLocation(ourShader.ID, "view");
         unsigned int projLoc = glGetUniformLocation(ourShader.ID, "projection");
+        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
+        glUniformMatrix4fv(projLoc, 1, GL_FALSE, &projection[0][0]);
         for (unsigned int i = 0; i < cube_positions.size(); i++) {
             glm::mat4 model = glm::mat4(1.0f);
             model = glm::translate(model, cube_positions[i]);
-            float angle = 20.0f * i;
             glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
-        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
-        glUniformMatrix4fv(projLoc, 1, GL_FALSE, &projection[0][0]);
 
         // Render the triangle
         ourShader.use();
         glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
 
         // Swap buffers and poll IO events
         glfwSwapBuffers(window);
