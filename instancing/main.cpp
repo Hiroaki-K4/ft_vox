@@ -7,7 +7,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <vector>
 
-#include "shader.h"
+#include "Shader.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -184,20 +184,23 @@ int main() {
         0, 1, 3, // first triangle
         1, 2, 3  // second triangle
     };
-    std::vector<glm::vec3> cubePositions = {
-        glm::vec3( 0.0f, 0.0f, 0.0f),
-        glm::vec3( 2.0f, 5.0f, -15.0f),
-        glm::vec3(-1.5f, -2.2f, -2.5f),
-        glm::vec3(-3.8f, -2.0f, -12.3f),
-        glm::vec3( 2.4f, -0.4f, -3.5f),
-        glm::vec3(-1.7f, 3.0f, -7.5f),
-        glm::vec3( 1.3f, -2.0f, -2.5f),
-        glm::vec3( 1.5f, 2.0f, -2.5f),
-        glm::vec3( 1.5f, 0.2f, -1.5f),
-        glm::vec3(-1.3f, 1.0f, -1.5f)
-    };
     std::vector<glm::vec3> cube_positions;
-    create_cube_positions(cube_positions, 8.0);
+    create_cube_positions(cube_positions, 16.0);
+    unsigned int amount = cube_positions.size();
+    glm::mat4 *modelMatrices;
+    modelMatrices = new glm::mat4[amount];
+    for (unsigned int i = 0; i < amount; i++) {
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, cube_positions[i]);
+        modelMatrices[i] = model;
+    }
+
+    // Configure instanced array
+    unsigned int buffer;
+    glGenBuffers(1, &buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, buffer);
+    glBufferData(GL_ARRAY_BUFFER, amount * sizeof(glm::mat4), &modelMatrices[0], GL_STATIC_DRAW);
+
     // Setup VAO
     unsigned int VBO, VAO, EBO;
     glGenVertexArrays(1, &VAO);
@@ -219,6 +222,22 @@ int main() {
     // Texture attribute
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
+    // Model matrix attribute
+    glBindBuffer(GL_ARRAY_BUFFER, buffer);
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)0);
+    glEnableVertexAttribArray(3);
+    glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(sizeof(glm::vec4)));
+    glEnableVertexAttribArray(4);
+    glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(2 * sizeof(glm::vec4)));
+    glEnableVertexAttribArray(5);
+    glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(3 * sizeof(glm::vec4)));
+
+    glVertexAttribDivisor(2, 1);
+    glVertexAttribDivisor(3, 1);
+    glVertexAttribDivisor(4, 1);
+    glVertexAttribDivisor(5, 1);
+    glBindVertexArray(0);
 
     // Create texture
     unsigned int texture1, texture2;
@@ -298,20 +317,14 @@ int main() {
         unsigned int modelLoc = glGetUniformLocation(ourShader.ID, "model");
         unsigned int viewLoc = glGetUniformLocation(ourShader.ID, "view");
         unsigned int projLoc = glGetUniformLocation(ourShader.ID, "projection");
-        for (unsigned int i = 0; i < cube_positions.size(); i++) {
-            glm::mat4 model = glm::mat4(1.0f);
-            model = glm::translate(model, cube_positions[i]);
-            float angle = 20.0f * i;
-            glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-            glDrawArrays(GL_TRIANGLES, 0, 36);
-        }
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
         glUniformMatrix4fv(projLoc, 1, GL_FALSE, &projection[0][0]);
 
         // Render the triangle
         ourShader.use();
         glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        glDrawArraysInstanced(GL_TRIANGLES, 0, 36, amount);
+        glBindVertexArray(0);
 
         // Swap buffers and poll IO events
         glfwSwapBuffers(window);
