@@ -184,16 +184,18 @@ int main() {
         0, 1, 3, // first triangle
         1, 2, 3  // second triangle
     };
+    // std::vector<glm::vec3> cube_positions;
     std::vector<glm::vec3> cube_positions;
     // create_cube_positions(cube_positions, 16.0);
 
-    unsigned int size = 16;
+    unsigned int size = 32;
     unsigned int octs = 5;
-    bool random_seed = true;
+    bool random_seed = false;
     Terrain terrain;
     terrain.create_perline_noise(size, octs, random_seed);
     terrain.rescale_noise(size);
     terrain.create_mountain(cube_positions, size);
+    // TODO: Add gradation to mountain
 
     unsigned int amount = cube_positions.size();
     glm::mat4 *modelMatrices;
@@ -306,7 +308,7 @@ int main() {
 
         // Render
         // Clear the colorbuffer
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glActiveTexture(GL_TEXTURE0);
