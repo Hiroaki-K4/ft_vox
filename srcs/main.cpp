@@ -8,7 +8,7 @@
 #include <vector>
 
 #include "Shader.h"
-#include "PerlineNoise.hpp"
+#include "Terrain.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -97,7 +97,6 @@ void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
 }
 
 void create_cube_positions(std::vector<glm::vec3> &cube_positions, float side_size) {
-    int count = 0;
     for (float i = -side_size + 0.5; i < side_size; i++) {
         for (float j = -side_size + 0.5; j < side_size; j++) {
             for (float k = -side_size + 0.5; k < side_size; k++) {
@@ -108,10 +107,6 @@ void create_cube_positions(std::vector<glm::vec3> &cube_positions, float side_si
 }
 
 int main() {
-    PerlineNoise perl;
-    std::vector<double> noise;
-    perl.create_perline_noise(noise);
-    std::cout << noise.size() << std::endl;
     if(!glfwInit()){
         std::cout << "Failed to initialize GLFW" << std::endl;
         return -1;
@@ -190,7 +185,16 @@ int main() {
         1, 2, 3  // second triangle
     };
     std::vector<glm::vec3> cube_positions;
-    create_cube_positions(cube_positions, 16.0);
+    // create_cube_positions(cube_positions, 16.0);
+
+    unsigned int size = 16;
+    unsigned int octs = 5;
+    bool random_seed = true;
+    Terrain terrain;
+    terrain.create_perline_noise(size, octs, random_seed);
+    terrain.rescale_noise(size);
+    terrain.create_mountain(cube_positions, size);
+
     unsigned int amount = cube_positions.size();
     glm::mat4 *modelMatrices;
     modelMatrices = new glm::mat4[amount];

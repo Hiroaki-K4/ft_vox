@@ -14,7 +14,6 @@ class PerlineNoise {
         PerlineNoise();
         PerlineNoise(
             const int size,
-            const double freq,
             const int octs,
             const bool random_seed
         );

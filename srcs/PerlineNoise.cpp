@@ -6,14 +6,12 @@ PerlineNoise::PerlineNoise() {
 
 PerlineNoise::PerlineNoise(
     const int size,
-    const double freq,
     const int octs,
     const bool random_seed) {
     std::cout << "PerlineNoise constructor2" << std::endl;
     this->size = size;
-    this->freq = freq;
-    this->freq = octs;
-    this->freq = random_seed;
+    this->octs = octs;
+    this->random_seed = random_seed;
 }
 
 PerlineNoise::~PerlineNoise() {
