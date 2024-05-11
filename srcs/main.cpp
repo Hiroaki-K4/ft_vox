@@ -102,16 +102,6 @@ void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
     }
 }
 
-void create_cube_positions(std::vector<glm::vec3> &cube_positions, float side_size) {
-    for (float i = -side_size + 0.5; i < side_size; i++) {
-        for (float j = -side_size + 0.5; j < side_size; j++) {
-            for (float k = -side_size + 0.5; k < side_size; k++) {
-                cube_positions.push_back(glm::vec3(i, j, k));
-            }
-        }
-    }
-}
-
 int main() {
     if(!glfwInit()){
         std::cout << "Failed to initialize GLFW" << std::endl;
@@ -191,7 +181,6 @@ int main() {
         1, 2, 3  // second triangle
     };
     std::vector<glm::vec3> cube_positions;
-    // create_cube_positions(cube_positions, 16.0);
 
     unsigned int size = 32;
     unsigned int hight_max = 16;
