@@ -190,16 +190,16 @@ int main() {
         0, 1, 3, // first triangle
         1, 2, 3  // second triangle
     };
-    // std::vector<glm::vec3> cube_positions;
     std::vector<glm::vec3> cube_positions;
     // create_cube_positions(cube_positions, 16.0);
 
     unsigned int size = 32;
+    unsigned int hight_max = 16;
     unsigned int octs = 5;
     bool random_seed = false;
     Terrain terrain;
     terrain.create_perline_noise(size, octs, random_seed);
-    terrain.rescale_noise(size);
+    terrain.rescale_noise(hight_max);
     terrain.create_mountain(cube_positions, size);
 
     unsigned int amount = cube_positions.size();

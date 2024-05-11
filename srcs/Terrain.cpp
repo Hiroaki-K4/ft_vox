@@ -34,11 +34,11 @@ void Terrain::rescale_noise(unsigned int scale) {
 }
 
 void Terrain::create_mountain(std::vector<glm::vec3> &positions, unsigned int size) {
-    for (unsigned int z = 0; z < size; z++) {
-        for (unsigned int x = 0; x < size; x++) {
-            double y = noise[size * z + x];
+    for (int z = 0; z < size; z++) {
+        for (int x = 0; x < size; x++) {
+            int y = int(noise[size * z + x]);
             positions.push_back(glm::vec3(x, y, z));
-            for (unsigned int i = y-10; i < y; i++) {
+            for (int i = y-10; i < y; i++) {
                 positions.push_back(glm::vec3(x, i, z));
             }
         }
