@@ -195,7 +195,6 @@ int main() {
     terrain.create_perline_noise(size, octs, random_seed);
     terrain.rescale_noise(size);
     terrain.create_mountain(cube_positions, size);
-    // TODO: Add gradation to mountain
 
     unsigned int amount = cube_positions.size();
     glm::mat4 *modelMatrices;
@@ -295,8 +294,6 @@ int main() {
     stbi_image_free(data);
 
     ourShader.use();
-    ourShader.setInt("texture1", 0);
-    ourShader.setInt("texture2", 1);
 
     glEnable(GL_DEPTH_TEST);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
