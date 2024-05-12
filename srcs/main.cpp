@@ -182,49 +182,17 @@ int main() {
     };
     std::vector<glm::vec3> cube_positions;
 
-    unsigned int size = 32;
+    unsigned int size = 96;
     unsigned int hight_max = 16;
     unsigned int octs = 3;
-    bool random_seed = false;
+    bool random_seed = true;
     Terrain terrain;
-    std::clock_t start;
-    double duration;
-    start = std::clock();
-    int x_start = -64;
-    int z_start = 64;
+    int x_start = 0;
+    int z_start = 0;
     terrain.create_perline_noise(x_start, z_start, size, octs, random_seed);
-    duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
-    std::cout<<"duration1: "<< duration <<'\n';
     terrain.rescale_noise(hight_max);
-    duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
-    std::cout<<"duration2: "<< duration <<'\n';
     terrain.create_mountain(x_start, z_start, cube_positions, size);
-    duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
-    std::cout<<"duration3: "<< duration <<'\n';
     std::cout << cube_positions.size() << std::endl;
-
-    x_start = 0;
-    z_start = 64;
-    terrain.create_perline_noise(x_start, z_start, size, octs, random_seed);
-    duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
-    std::cout<<"duration1: "<< duration <<'\n';
-    terrain.rescale_noise(hight_max);
-    duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
-    std::cout<<"duration2: "<< duration <<'\n';
-    terrain.create_mountain(x_start, z_start, cube_positions, size);
-    duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
-    std::cout<<"duration3: "<< duration <<'\n';
-    x_start = 32;
-    z_start = 64;
-    terrain.create_perline_noise(x_start, z_start, size, octs, random_seed);
-    duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
-    std::cout<<"duration1: "<< duration <<'\n';
-    terrain.rescale_noise(hight_max);
-    duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
-    std::cout<<"duration2: "<< duration <<'\n';
-    terrain.create_mountain(x_start, z_start, cube_positions, size);
-    duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
-    std::cout<<"duration3: "<< duration <<'\n';
 
     unsigned int amount = cube_positions.size();
     glm::mat4 *modelMatrices;
@@ -279,69 +247,53 @@ int main() {
     glVertexAttribDivisor(5, 1);
     glBindVertexArray(0);
 
-    // Create texture
-    unsigned int texture1, texture2;
-    // texture 1
-    glGenTextures(1, &texture1);
-    glBindTexture(GL_TEXTURE_2D, texture1);
-
-    // Set the texture wrapping/filtering options (on currently bound texture)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    // Load and generate the texture
-    int width, height, nrChannels;
-    stbi_set_flip_vertically_on_load(true);
-    unsigned char *data = stbi_load("../textures/container.jpg", &width, &height, &nrChannels, 0);
-    if (data) {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-    } else {
-        std::cout << "Failed to load texture" << std::endl;
-    }
-    stbi_image_free(data);
-
-    // texture2
-    glGenTextures(1, &texture2);
-    glBindTexture(GL_TEXTURE_2D, texture2);
-
-    // Set the texture wrapping/filtering options (on currently bound texture)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    // Load and generate the texture
-    data = stbi_load("../textures/awesomeface.png", &width, &height, &nrChannels, 0);
-    if (data) {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-    } else {
-        std::cout << "Failed to load texture" << std::endl;
-    }
-    stbi_image_free(data);
-
     ourShader.use();
 
     glEnable(GL_DEPTH_TEST);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
+    cameraPos = glm::vec3((size - x_start) / 2, 16.0f, (size - z_start) / 2);
     // Render loop
+    double x_range_min = x_start + size / 3;
+    double x_range_max = x_start + size / 3 * 2;
+    double z_range_min = z_start + size / 3;
+    double z_range_max = z_start + size / 3 * 2;
     while (!glfwWindowShouldClose(window)) {
-        // Input
         processInput(window);
+
+        std::cout << cameraPos[0] << " " << cameraPos[2] << " " << x_range_min << " " << x_range_max << " " << z_range_min << " " << z_range_max << std::endl;
+        if (cameraPos[0] < x_range_min || cameraPos[0] > x_range_max
+            || cameraPos[2] < z_range_min || cameraPos[2] > z_range_max) {
+            // TODO: Add terrain smoothly
+            x_start = int(cameraPos[0] - size / 2);
+            z_start = int(cameraPos[2] - size / 2);
+            terrain.create_perline_noise(x_start, z_start, size, octs, random_seed);
+            terrain.rescale_noise(hight_max);
+            cube_positions.clear();
+            terrain.create_mountain(x_start, z_start, cube_positions, size);
+            x_range_min = x_start + size / 3;
+            x_range_max = x_start + size / 3 * 2;
+            z_range_min = z_start + size / 3;
+            z_range_max = z_start + size / 3 * 2;
+        }
+
+        for (unsigned int i = 0; i < amount; i++) {
+            glm::mat4 model = glm::mat4(1.0f);
+            model = glm::translate(model, cube_positions[i]);
+            modelMatrices[i] = model;
+        }
+
+        // Configure instanced array
+        // unsigned int buffer;
+        // glGenBuffers(1, &buffer);
+        // glBindBuffer(GL_ARRAY_BUFFER, buffer);
+        glBufferData(GL_ARRAY_BUFFER, amount * sizeof(glm::mat4), &modelMatrices[0], GL_STATIC_DRAW);
+
 
         // Render
         // Clear the colorbuffer
         glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture1);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, texture2);
 
         // Camera
         glm::mat4 view;
