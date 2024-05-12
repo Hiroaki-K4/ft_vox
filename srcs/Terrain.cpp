@@ -13,10 +13,11 @@ Terrain::~Terrain() {
     std::cout << "Terrain destructor" << std::endl;
 }
 
-void Terrain::create_perline_noise(unsigned int size, unsigned int octs, bool random_seed) {
+void Terrain::create_perline_noise(
+    int x_start, int z_start, unsigned int size, unsigned int octs, bool random_seed) {
     PerlineNoise perline_noise(size, octs, random_seed);
     std::vector<double> noise;
-    perline_noise.create_perline_noise(noise);
+    perline_noise.create_perline_noise(abs(x_start), abs(z_start), noise);
     this->noise = noise;
 }
 
@@ -33,10 +34,11 @@ void Terrain::rescale_noise(unsigned int scale) {
     std::cout << "minmax_fi: " << min_noise_fi << " " << max_noise_fi << std::endl;
 }
 
-void Terrain::create_mountain(std::vector<glm::vec3> &positions, unsigned int size) {
-    for (int z = 0; z < size; z++) {
-        for (int x = 0; x < size; x++) {
-            int y = int(noise[size * z + x]);
+void Terrain::create_mountain(
+    int x_start, int z_start, std::vector<glm::vec3> &positions, unsigned int size) {
+    for (int z = z_start; z < z_start + (int)size; z++) {
+        for (int x = x_start; x < x_start + (int)size; x++) {
+            int y = int(noise[(int)size * (z - z_start) + (x - x_start)]);
             positions.push_back(glm::vec3(x, y, z));
             for (int i = y-10; i < y; i++) {
                 positions.push_back(glm::vec3(x, i, z));

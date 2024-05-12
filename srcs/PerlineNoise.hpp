@@ -31,7 +31,7 @@ class PerlineNoise {
             double x, double y, int period, unsigned int octs,
             std::vector<std::pair<double, double>> dirs,
             std::vector<int> perm);
-        void create_perline_noise(std::vector<double> &noise);
+        void create_perline_noise(int x_start, int z_start, std::vector<double> &noise);
 
     private:
         unsigned int size = 128;

@@ -66,7 +66,8 @@ double PerlineNoise::calculate_octave_perline_noise(
     return noise;
 }
 
-void PerlineNoise::create_perline_noise(std::vector<double> &noise) {
+void PerlineNoise::create_perline_noise(
+    int x_start, int z_start, std::vector<double> &noise) {
     unsigned int rand_num = 256;
     std::vector<int> perm(rand_num);
     std::iota(perm.begin(), perm.end(), 0);
@@ -91,10 +92,18 @@ void PerlineNoise::create_perline_noise(std::vector<double> &noise) {
         dirs.push_back(dir);
     }
 
-    for (unsigned int y = 0; y < size; y++) {
-        for (unsigned int x = 0; x < size; x++) {
+    std::clock_t start;
+    double duration;
+    start = std::clock();
+    noise.reserve(size * size);
+    for (int y = z_start; y < z_start + (int)size; y++) {
+        for (int x = x_start; x < x_start + (int)size; x++) {
             noise.push_back(calculate_octave_perline_noise(
                 x * freq, y * freq, int(size * freq), octs, dirs, perm));
+            // std::cout << x << " " << y << std::endl;
         }
     }
+    std::cout << "noise size: " << noise.size() << std::endl;
+    duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
+    std::cout<<"duration_sp: "<< duration <<'\n';
 }

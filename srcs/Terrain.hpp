@@ -13,9 +13,9 @@ class Terrain {
         Terrain();
         Terrain(std::vector<double> noise);
         ~Terrain();
-        void create_perline_noise(unsigned int size, unsigned int octs, bool random_seed);
+        void create_perline_noise(int x_start, int z_start, unsigned int size, unsigned int octs, bool random_seed);
         void rescale_noise(unsigned int scale);
-        void create_mountain(std::vector<glm::vec3> &positions, unsigned int size);
+        void create_mountain(int x_start, int z_start, std::vector<glm::vec3> &positions, unsigned int size);
 
     private:
         std::vector<double> noise;
