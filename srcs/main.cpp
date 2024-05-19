@@ -31,11 +31,10 @@ void processInput(GLFWwindow *window) {
         glfwSetWindowShouldClose(window, true);
     }
 
-    // const float cameraSpeed = 0.05f;
     float currentFrame = glfwGetTime();
     deltaTime = currentFrame - lastFrame;
     lastFrame = currentFrame;
-    float cameraSpeed = 2.5f * deltaTime;
+    float cameraSpeed = 2.0f * deltaTime;
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
         cameraPos += cameraSpeed * cameraFront;
     }
@@ -47,6 +46,12 @@ void processInput(GLFWwindow *window) {
     }
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
         cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+    }
+    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
+        cameraPos += cameraSpeed * cameraUp;
+    }
+    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
+        cameraPos -= cameraSpeed * cameraUp;
     }
 }
 
@@ -96,14 +101,22 @@ void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
     }
 }
 
-void create_cube_positions(std::vector<glm::vec3> &cube_positions, float side_size) {
-    for (float i = -side_size + 0.5; i < side_size; i++) {
-        for (float j = -side_size + 0.5; j < side_size; j++) {
-            for (float k = -side_size + 0.5; k < side_size; k++) {
-                cube_positions.push_back(glm::vec3(i, j, k));
+std::vector<glm::vec3> update_cube_positions(
+    std::vector<glm::vec3> cube_positions, std::vector<glm::vec3> new_cube_positions, glm::mat4 *modelMatrices) {
+    for (unsigned int i = 0; i < new_cube_positions.size(); i++) {
+        for (unsigned int j = 0; j < cube_positions.size(); j++) {
+            if (new_cube_positions[i][0] == cube_positions[j][0] && new_cube_positions[i][2] == cube_positions[j][2]) {
+                new_cube_positions[i][1] = cube_positions[j][1];
+                cube_positions.erase(cube_positions.begin() + j);
+                break;
             }
         }
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, new_cube_positions[i]);
+        modelMatrices[i] = model;
     }
+
+    return new_cube_positions;
 }
 
 int main() {
@@ -184,17 +197,18 @@ int main() {
         0, 1, 3, // first triangle
         1, 2, 3  // second triangle
     };
-    // std::vector<glm::vec3> cube_positions;
     std::vector<glm::vec3> cube_positions;
-    // create_cube_positions(cube_positions, 16.0);
 
-    unsigned int size = 32;
-    unsigned int octs = 5;
-    bool random_seed = false;
+    double size = 42.0;
+    unsigned int hight_max = 12;
+    unsigned int octs = 1;
+    bool random_seed = true;
     Terrain terrain;
-    terrain.create_perline_noise(size, octs, random_seed);
-    terrain.rescale_noise(size);
-    terrain.create_mountain(cube_positions, size);
+    int x_start = 0;
+    int z_start = 0;
+    terrain.create_perline_noise(x_start, z_start, static_cast<unsigned int>(size), octs, random_seed);
+    terrain.rescale_noise(hight_max);
+    terrain.create_mountain(x_start, z_start, cube_positions, static_cast<unsigned int>(size));
 
     unsigned int amount = cube_positions.size();
     glm::mat4 *modelMatrices;
@@ -249,69 +263,46 @@ int main() {
     glVertexAttribDivisor(5, 1);
     glBindVertexArray(0);
 
-    // Create texture
-    unsigned int texture1, texture2;
-    // texture 1
-    glGenTextures(1, &texture1);
-    glBindTexture(GL_TEXTURE_2D, texture1);
-
-    // Set the texture wrapping/filtering options (on currently bound texture)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    // Load and generate the texture
-    int width, height, nrChannels;
-    stbi_set_flip_vertically_on_load(true);
-    unsigned char *data = stbi_load("../textures/container.jpg", &width, &height, &nrChannels, 0);
-    if (data) {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-    } else {
-        std::cout << "Failed to load texture" << std::endl;
-    }
-    stbi_image_free(data);
-
-    // texture2
-    glGenTextures(1, &texture2);
-    glBindTexture(GL_TEXTURE_2D, texture2);
-
-    // Set the texture wrapping/filtering options (on currently bound texture)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    // Load and generate the texture
-    data = stbi_load("../textures/awesomeface.png", &width, &height, &nrChannels, 0);
-    if (data) {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-    } else {
-        std::cout << "Failed to load texture" << std::endl;
-    }
-    stbi_image_free(data);
-
     ourShader.use();
 
     glEnable(GL_DEPTH_TEST);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
+    cameraPos = glm::vec3((size - x_start) / 2, hight_max, (size - z_start) / 2);
     // Render loop
+    double x_range_min = x_start + size / 3;
+    double x_range_max = x_start + size / 3 * 2;
+    double z_range_min = z_start + size / 3;
+    double z_range_max = z_start + size / 3 * 2;
+    std::vector<glm::vec3> new_cube_positions;
     while (!glfwWindowShouldClose(window)) {
-        // Input
         processInput(window);
+
+        // std::cout << "camera x: " << cameraPos[0] << " camera z: " << cameraPos[2] << " x_range_min: " << x_range_min << " x_range_max: " << x_range_max << " z_range_min: " << z_range_min << " z_range_max: " << z_range_max << " size: " << size << std::endl;
+        if (cameraPos[0] < x_range_min || cameraPos[0] > x_range_max
+            || cameraPos[2] < z_range_min || cameraPos[2] > z_range_max) {
+            std::cout << "Updating map..." << std::endl;
+            x_start = static_cast<int>(cameraPos[0] - size / 2);
+            z_start = static_cast<int>(cameraPos[2] - size / 2);
+            terrain.create_perline_noise(x_start, z_start, size, octs, random_seed);
+            terrain.rescale_noise(hight_max);
+            new_cube_positions.clear();
+            terrain.create_mountain(x_start, z_start, new_cube_positions, size);
+            cube_positions = update_cube_positions(cube_positions, new_cube_positions, modelMatrices);
+            x_range_min = static_cast<double>(x_start + size / 3);
+            x_range_max = static_cast<double>(x_start + size / 3 * 2);
+            z_range_min = static_cast<double>(z_start + size / 3);
+            z_range_max = static_cast<double>(z_start + size / 3 * 2);
+            std::cout << "Map update completed !!" << std::endl;
+        }
+
+        // Configure instanced array
+        glBufferData(GL_ARRAY_BUFFER, amount * sizeof(glm::mat4), &modelMatrices[0], GL_STATIC_DRAW);
 
         // Render
         // Clear the colorbuffer
         glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture1);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, texture2);
 
         // Camera
         glm::mat4 view;

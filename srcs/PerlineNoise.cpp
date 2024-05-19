@@ -1,22 +1,17 @@
 #include "PerlineNoise.hpp"
 
-PerlineNoise::PerlineNoise() {
-    std::cout << "PerlineNoise constructor" << std::endl;
-}
+PerlineNoise::PerlineNoise() {}
 
 PerlineNoise::PerlineNoise(
     const int size,
     const int octs,
     const bool random_seed) {
-    std::cout << "PerlineNoise constructor2" << std::endl;
     this->size = size;
     this->octs = octs;
     this->random_seed = random_seed;
 }
 
-PerlineNoise::~PerlineNoise() {
-    std::cout << "PerlineNoise destructor" << std::endl;
-}
+PerlineNoise::~PerlineNoise() {}
 
 double PerlineNoise::calculate_weighted_dot_product(
     int gridX, int gridY, double x, double y, int period,
@@ -66,7 +61,8 @@ double PerlineNoise::calculate_octave_perline_noise(
     return noise;
 }
 
-void PerlineNoise::create_perline_noise(std::vector<double> &noise) {
+void PerlineNoise::create_perline_noise(
+    int x_start, int z_start, std::vector<double> &noise) {
     unsigned int rand_num = 256;
     std::vector<int> perm(rand_num);
     std::iota(perm.begin(), perm.end(), 0);
@@ -91,8 +87,9 @@ void PerlineNoise::create_perline_noise(std::vector<double> &noise) {
         dirs.push_back(dir);
     }
 
-    for (unsigned int y = 0; y < size; y++) {
-        for (unsigned int x = 0; x < size; x++) {
+    noise.reserve(size * size);
+    for (int y = z_start; y < z_start + (int)size; y++) {
+        for (int x = x_start; x < x_start + (int)size; x++) {
             noise.push_back(calculate_octave_perline_noise(
                 x * freq, y * freq, int(size * freq), octs, dirs, perm));
         }
