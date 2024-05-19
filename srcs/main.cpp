@@ -31,11 +31,10 @@ void processInput(GLFWwindow *window) {
         glfwSetWindowShouldClose(window, true);
     }
 
-    // const float cameraSpeed = 0.05f;
     float currentFrame = glfwGetTime();
     deltaTime = currentFrame - lastFrame;
     lastFrame = currentFrame;
-    float cameraSpeed = 2.5f * deltaTime;
+    float cameraSpeed = 2.0f * deltaTime;
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
         cameraPos += cameraSpeed * cameraFront;
     }
@@ -100,6 +99,24 @@ void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
     if (fov > 45.0f) {
         fov = 45.0f;
     }
+}
+
+std::vector<glm::vec3> update_cube_positions(
+    std::vector<glm::vec3> cube_positions, std::vector<glm::vec3> new_cube_positions, glm::mat4 *modelMatrices) {
+    for (unsigned int i = 0; i < new_cube_positions.size(); i++) {
+        for (unsigned int j = 0; j < cube_positions.size(); j++) {
+            if (new_cube_positions[i][0] == cube_positions[j][0] && new_cube_positions[i][2] == cube_positions[j][2]) {
+                new_cube_positions[i][1] = cube_positions[j][1];
+                cube_positions.erase(cube_positions.begin() + j);
+                break;
+            }
+        }
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, new_cube_positions[i]);
+        modelMatrices[i] = model;
+    }
+
+    return new_cube_positions;
 }
 
 int main() {
@@ -182,17 +199,16 @@ int main() {
     };
     std::vector<glm::vec3> cube_positions;
 
-    unsigned int size = 96;
-    unsigned int hight_max = 16;
-    unsigned int octs = 3;
+    double size = 42.0;
+    unsigned int hight_max = 12;
+    unsigned int octs = 1;
     bool random_seed = true;
     Terrain terrain;
     int x_start = 0;
     int z_start = 0;
-    terrain.create_perline_noise(x_start, z_start, size, octs, random_seed);
+    terrain.create_perline_noise(x_start, z_start, static_cast<unsigned int>(size), octs, random_seed);
     terrain.rescale_noise(hight_max);
-    terrain.create_mountain(x_start, z_start, cube_positions, size);
-    std::cout << cube_positions.size() << std::endl;
+    terrain.create_mountain(x_start, z_start, cube_positions, static_cast<unsigned int>(size));
 
     unsigned int amount = cube_positions.size();
     glm::mat4 *modelMatrices;
@@ -252,43 +268,36 @@ int main() {
     glEnable(GL_DEPTH_TEST);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-    cameraPos = glm::vec3((size - x_start) / 2, 16.0f, (size - z_start) / 2);
+    cameraPos = glm::vec3((size - x_start) / 2, hight_max, (size - z_start) / 2);
     // Render loop
     double x_range_min = x_start + size / 3;
     double x_range_max = x_start + size / 3 * 2;
     double z_range_min = z_start + size / 3;
     double z_range_max = z_start + size / 3 * 2;
+    std::vector<glm::vec3> new_cube_positions;
     while (!glfwWindowShouldClose(window)) {
         processInput(window);
 
-        std::cout << cameraPos[0] << " " << cameraPos[2] << " " << x_range_min << " " << x_range_max << " " << z_range_min << " " << z_range_max << std::endl;
+        // std::cout << "camera x: " << cameraPos[0] << " camera z: " << cameraPos[2] << " x_range_min: " << x_range_min << " x_range_max: " << x_range_max << " z_range_min: " << z_range_min << " z_range_max: " << z_range_max << " size: " << size << std::endl;
         if (cameraPos[0] < x_range_min || cameraPos[0] > x_range_max
             || cameraPos[2] < z_range_min || cameraPos[2] > z_range_max) {
-            // TODO: Add terrain smoothly
-            x_start = int(cameraPos[0] - size / 2);
-            z_start = int(cameraPos[2] - size / 2);
+            std::cout << "Updating map..." << std::endl;
+            x_start = static_cast<int>(cameraPos[0] - size / 2);
+            z_start = static_cast<int>(cameraPos[2] - size / 2);
             terrain.create_perline_noise(x_start, z_start, size, octs, random_seed);
             terrain.rescale_noise(hight_max);
-            cube_positions.clear();
-            terrain.create_mountain(x_start, z_start, cube_positions, size);
-            x_range_min = x_start + size / 3;
-            x_range_max = x_start + size / 3 * 2;
-            z_range_min = z_start + size / 3;
-            z_range_max = z_start + size / 3 * 2;
-        }
-
-        for (unsigned int i = 0; i < amount; i++) {
-            glm::mat4 model = glm::mat4(1.0f);
-            model = glm::translate(model, cube_positions[i]);
-            modelMatrices[i] = model;
+            new_cube_positions.clear();
+            terrain.create_mountain(x_start, z_start, new_cube_positions, size);
+            cube_positions = update_cube_positions(cube_positions, new_cube_positions, modelMatrices);
+            x_range_min = static_cast<double>(x_start + size / 3);
+            x_range_max = static_cast<double>(x_start + size / 3 * 2);
+            z_range_min = static_cast<double>(z_start + size / 3);
+            z_range_max = static_cast<double>(z_start + size / 3 * 2);
+            std::cout << "Map update completed !!" << std::endl;
         }
 
         // Configure instanced array
-        // unsigned int buffer;
-        // glGenBuffers(1, &buffer);
-        // glBindBuffer(GL_ARRAY_BUFFER, buffer);
         glBufferData(GL_ARRAY_BUFFER, amount * sizeof(glm::mat4), &modelMatrices[0], GL_STATIC_DRAW);
-
 
         // Render
         // Clear the colorbuffer

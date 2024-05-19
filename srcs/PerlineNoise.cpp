@@ -1,22 +1,17 @@
 #include "PerlineNoise.hpp"
 
-PerlineNoise::PerlineNoise() {
-    std::cout << "PerlineNoise constructor" << std::endl;
-}
+PerlineNoise::PerlineNoise() {}
 
 PerlineNoise::PerlineNoise(
     const int size,
     const int octs,
     const bool random_seed) {
-    std::cout << "PerlineNoise constructor2" << std::endl;
     this->size = size;
     this->octs = octs;
     this->random_seed = random_seed;
 }
 
-PerlineNoise::~PerlineNoise() {
-    std::cout << "PerlineNoise destructor" << std::endl;
-}
+PerlineNoise::~PerlineNoise() {}
 
 double PerlineNoise::calculate_weighted_dot_product(
     int gridX, int gridY, double x, double y, int period,
@@ -92,18 +87,11 @@ void PerlineNoise::create_perline_noise(
         dirs.push_back(dir);
     }
 
-    std::clock_t start;
-    double duration;
-    start = std::clock();
     noise.reserve(size * size);
     for (int y = z_start; y < z_start + (int)size; y++) {
         for (int x = x_start; x < x_start + (int)size; x++) {
             noise.push_back(calculate_octave_perline_noise(
                 x * freq, y * freq, int(size * freq), octs, dirs, perm));
-            // std::cout << x << " " << y << std::endl;
         }
     }
-    std::cout << "noise size: " << noise.size() << std::endl;
-    duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
-    std::cout<<"duration_sp: "<< duration <<'\n';
 }
