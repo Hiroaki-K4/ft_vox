@@ -37,7 +37,7 @@ make
 ./ft_vox
 ```
 
-<img src='images/ft_vox.gif' width='600'>
+<img src='images/ft_vox_long.gif' width='600'>
 
 You can move around by doing the following.
 
