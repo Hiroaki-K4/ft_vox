@@ -6,6 +6,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <vector>
+#include <thread>
 
 #include "Shader.h"
 #include "Terrain.hpp"
@@ -13,6 +14,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
+std::vector<glm::vec3> cube_positions;
 
 glm::vec3 cameraPos = glm::vec3(32.0f, 16.0f, 32.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
@@ -119,6 +121,21 @@ std::vector<glm::vec3> update_cube_positions(
     return new_cube_positions;
 }
 
+void create_new_map_with_thread(
+    Terrain terrain, int x_start, int z_start, double size,
+    unsigned int octs, bool random_seed, unsigned int height_max,
+    std::vector<glm::vec3> new_cube_positions, glm::mat4 *modelMatrices) {
+    std::cout << "Updating map..." << std::endl;
+
+    terrain.create_perline_noise(x_start, z_start, size, octs, random_seed);
+    terrain.rescale_noise(height_max);
+    new_cube_positions.clear();
+    terrain.create_mountain(x_start, z_start, new_cube_positions, size);
+    cube_positions = update_cube_positions(cube_positions, new_cube_positions, modelMatrices);
+
+    std::cout << "Map update completed !!" << std::endl;
+}
+
 int main() {
     if(!glfwInit()){
         std::cout << "Failed to initialize GLFW" << std::endl;
@@ -150,64 +167,65 @@ int main() {
     Shader ourShader("texture.vs", "texture.fs");
 
     float vertices[] = {
-        // positions          // colors          // texture coords
-        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
-        0.5f, -0.5f, -0.5f, 1.0f, 0.0f,
-        0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-        0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
+        // positions        // texture coords  // TexIndex
+        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 1,
+        0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 1,
+        0.5f, 0.5f, -0.5f, 1.0f, 1.0f, 1,
+        0.5f, 0.5f, -0.5f, 1.0f, 1.0f, 1,
+        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 1,
+        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 1,
 
-        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-        0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
-        0.5f, 0.5f, 0.5f, 1.0f, 1.0f,
-        0.5f, 0.5f, 0.5f, 1.0f, 1.0f,
-        -0.5f, 0.5f, 0.5f, 0.0f, 1.0f,
-        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
+        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1,
+        0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 1,
+        0.5f, 0.5f, 0.5f, 1.0f, 1.0f, 1,
+        0.5f, 0.5f, 0.5f, 1.0f, 1.0f, 1,
+        -0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 1,
+        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1,
 
-        -0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-        -0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-        -0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+        -0.5f, 0.5f, 0.5f, 1.0f, 1.0f, 1,
+        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 1,
+        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 1,
+        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 1,
+        -0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 1,
+        -0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 1,
 
-        0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-        0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-        0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-        0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-        0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-        0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
+        0.5f, 0.5f, 0.5f, 1.0f, 1.0f, 1,
+        0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 1,
+        0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 1,
+        0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 1,
+        0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 1,
+        0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 1,
 
-        -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-        0.5f, -0.5f, -0.5f, 1.0f, 1.0f,
-        0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
-        0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
-        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-        -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+        // Bottom
+        -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 0,
+        0.5f, -0.5f, -0.5f, 1.0f, 1.0f, 0,
+        0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 0,
+        0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 0,
+        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 0,
+        -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 0,
 
-        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
-        0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-        0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-        0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-        -0.5f, 0.5f, 0.5f, 0.0f, 0.0f,
-        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f
+        // Top
+        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0,
+        0.5f, 0.5f, -0.5f, 1.0f, 1.0f, 0,
+        0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0,
+        0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0,
+        -0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 0,
+        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0,
     };
     unsigned int indices[] = {
         0, 1, 3, // first triangle
         1, 2, 3  // second triangle
     };
-    std::vector<glm::vec3> cube_positions;
 
     double size = 42.0;
-    unsigned int hight_max = 12;
+    unsigned int height_max = 12;
     unsigned int octs = 1;
     bool random_seed = true;
     Terrain terrain;
     int x_start = 0;
     int z_start = 0;
     terrain.create_perline_noise(x_start, z_start, static_cast<unsigned int>(size), octs, random_seed);
-    terrain.rescale_noise(hight_max);
+    terrain.rescale_noise(height_max);
     terrain.create_mountain(x_start, z_start, cube_positions, static_cast<unsigned int>(size));
 
     unsigned int amount = cube_positions.size();
@@ -241,34 +259,79 @@ int main() {
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
     // Position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
-    // Texture attribute
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    // Texture coordinate attribute
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
+    // Texture index attribute
+    glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(5 * sizeof(float)));
+    glEnableVertexAttribArray(2);
     // Model matrix attribute
     glBindBuffer(GL_ARRAY_BUFFER, buffer);
-    glEnableVertexAttribArray(2);
-    glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)0);
     glEnableVertexAttribArray(3);
-    glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(sizeof(glm::vec4)));
+    glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)0);
     glEnableVertexAttribArray(4);
-    glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(2 * sizeof(glm::vec4)));
+    glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(sizeof(glm::vec4)));
     glEnableVertexAttribArray(5);
-    glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(3 * sizeof(glm::vec4)));
+    glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(2 * sizeof(glm::vec4)));
+    glEnableVertexAttribArray(6);
+    glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(3 * sizeof(glm::vec4)));
 
-    glVertexAttribDivisor(2, 1);
     glVertexAttribDivisor(3, 1);
     glVertexAttribDivisor(4, 1);
     glVertexAttribDivisor(5, 1);
+    glVertexAttribDivisor(6, 1);
     glBindVertexArray(0);
 
+    // Create texture
+    unsigned int texture1, texture2;
+    // texture 1
+    glGenTextures(1, &texture1);
+    glBindTexture(GL_TEXTURE_2D, texture1);
+    // Set the texture wrapping/filtering options (on currently bound texture)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    // Load and generate the texture
+    int width, height, nrChannels;
+    stbi_set_flip_vertically_on_load(true);
+    unsigned char *data = stbi_load("../textures/grass_top.png", &width, &height, &nrChannels, 0);
+    if (data) {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    } else {
+        std::cout << "Failed to load texture" << std::endl;
+    }
+    stbi_image_free(data);
+
+    // texture2
+    glGenTextures(1, &texture2);
+    glBindTexture(GL_TEXTURE_2D, texture2);
+    // Set the texture wrapping/filtering options (on currently bound texture)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    // Load and generate the texture
+    data = stbi_load("../textures/grass_side.png", &width, &height, &nrChannels, 0);
+    if (data) {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    } else {
+        std::cout << "Failed to load texture" << std::endl;
+    }
+    stbi_image_free(data);
+
     ourShader.use();
+    ourShader.setInt("texture1", 0);
+    ourShader.setInt("texture2", 1);
 
     glEnable(GL_DEPTH_TEST);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-    cameraPos = glm::vec3((size - x_start) / 2, hight_max, (size - z_start) / 2);
+    cameraPos = glm::vec3((size - x_start) / 2, height_max, (size - z_start) / 2);
     // Render loop
     double x_range_min = x_start + size / 3;
     double x_range_max = x_start + size / 3 * 2;
@@ -281,19 +344,17 @@ int main() {
         // std::cout << "camera x: " << cameraPos[0] << " camera z: " << cameraPos[2] << " x_range_min: " << x_range_min << " x_range_max: " << x_range_max << " z_range_min: " << z_range_min << " z_range_max: " << z_range_max << " size: " << size << std::endl;
         if (cameraPos[0] < x_range_min || cameraPos[0] > x_range_max
             || cameraPos[2] < z_range_min || cameraPos[2] > z_range_max) {
-            std::cout << "Updating map..." << std::endl;
             x_start = static_cast<int>(cameraPos[0] - size / 2);
             z_start = static_cast<int>(cameraPos[2] - size / 2);
-            terrain.create_perline_noise(x_start, z_start, size, octs, random_seed);
-            terrain.rescale_noise(hight_max);
-            new_cube_positions.clear();
-            terrain.create_mountain(x_start, z_start, new_cube_positions, size);
-            cube_positions = update_cube_positions(cube_positions, new_cube_positions, modelMatrices);
+
+            std::thread map_thread(create_new_map_with_thread, terrain, x_start, z_start, size, octs,
+                random_seed, height_max, new_cube_positions, modelMatrices);
+            map_thread.join();
+
             x_range_min = static_cast<double>(x_start + size / 3);
             x_range_max = static_cast<double>(x_start + size / 3 * 2);
             z_range_min = static_cast<double>(z_start + size / 3);
             z_range_max = static_cast<double>(z_start + size / 3 * 2);
-            std::cout << "Map update completed !!" << std::endl;
         }
 
         // Configure instanced array
@@ -301,8 +362,13 @@ int main() {
 
         // Render
         // Clear the colorbuffer
-        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+        glClearColor(0.678f, 0.847f, 0.902f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture1);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, texture2);
 
         // Camera
         glm::mat4 view;
