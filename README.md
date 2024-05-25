@@ -4,7 +4,7 @@ In this repository, I created a voxel engine similar to Minecraft. The terrain i
 <br><br>
 
 ## Procedural generation
-[Procedural generation](https://en.wikipedia.org/wiki/Procedural_generation) is a technique used in animation, visual effects, game development, and many other fields to create digital content algorithmically instead of manually designing it. It would be too dedious for designers to create huge terrains by hand, so we use the power of algorithms to create natural terrains. [Perline noise](https://en.wikipedia.org/wiki/Perlin_noise#:~:text=Perlin%20noise%20is%20a%20procedural,details%20are%20the%20same%20size.) is famous as the method of procedural generation. Please check [my article](https://medium.com/@hirok4/create-random-3d-terrain-by-using-perline-noise-546c6de2a166) if you want to know how to create 3D terrain by using perline noise.
+[Procedural generation](https://en.wikipedia.org/wiki/Procedural_generation) is a technique used in animation, visual effects, game development, and many other fields to create digital content algorithmically instead of manually designing it. It would be too dedious for designers to create huge terrains by hand, so we use the power of algorithms to create natural terrains. [Perline noise](https://en.wikipedia.org/wiki/Perlin_noise#:~:text=Perlin%20noise%20is%20a%20procedural,details%20are%20the%20same%20size.) is famous as the method of procedural generation. Please check [my article](https://medium.com/@hirok4/create-random-3d-terrain-by-using-perline-noise-546c6de2a166) if you want to know how to create 3D terrain by using Perline noise.
 
 <br><br>
 
