@@ -6,6 +6,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <vector>
+#include <thread>
 
 #include "Shader.h"
 #include "Terrain.hpp"
@@ -13,6 +14,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
+std::vector<glm::vec3> cube_positions;
 
 glm::vec3 cameraPos = glm::vec3(32.0f, 16.0f, 32.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
@@ -119,6 +121,21 @@ std::vector<glm::vec3> update_cube_positions(
     return new_cube_positions;
 }
 
+void create_new_map_with_thread(
+    Terrain terrain, int x_start, int z_start, double size,
+    unsigned int octs, bool random_seed, unsigned int height_max,
+    std::vector<glm::vec3> new_cube_positions, glm::mat4 *modelMatrices) {
+    std::cout << "Updating map..." << std::endl;
+
+    terrain.create_perline_noise(x_start, z_start, size, octs, random_seed);
+    terrain.rescale_noise(height_max);
+    new_cube_positions.clear();
+    terrain.create_mountain(x_start, z_start, new_cube_positions, size);
+    cube_positions = update_cube_positions(cube_positions, new_cube_positions, modelMatrices);
+
+    std::cout << "Map update completed !!" << std::endl;
+}
+
 int main() {
     if(!glfwInit()){
         std::cout << "Failed to initialize GLFW" << std::endl;
@@ -197,17 +214,16 @@ int main() {
         0, 1, 3, // first triangle
         1, 2, 3  // second triangle
     };
-    std::vector<glm::vec3> cube_positions;
 
     double size = 42.0;
-    unsigned int hight_max = 12;
+    unsigned int height_max = 12;
     unsigned int octs = 1;
     bool random_seed = true;
     Terrain terrain;
     int x_start = 0;
     int z_start = 0;
     terrain.create_perline_noise(x_start, z_start, static_cast<unsigned int>(size), octs, random_seed);
-    terrain.rescale_noise(hight_max);
+    terrain.rescale_noise(height_max);
     terrain.create_mountain(x_start, z_start, cube_positions, static_cast<unsigned int>(size));
 
     unsigned int amount = cube_positions.size();
@@ -268,7 +284,7 @@ int main() {
     glEnable(GL_DEPTH_TEST);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-    cameraPos = glm::vec3((size - x_start) / 2, hight_max, (size - z_start) / 2);
+    cameraPos = glm::vec3((size - x_start) / 2, height_max, (size - z_start) / 2);
     // Render loop
     double x_range_min = x_start + size / 3;
     double x_range_max = x_start + size / 3 * 2;
@@ -281,19 +297,17 @@ int main() {
         // std::cout << "camera x: " << cameraPos[0] << " camera z: " << cameraPos[2] << " x_range_min: " << x_range_min << " x_range_max: " << x_range_max << " z_range_min: " << z_range_min << " z_range_max: " << z_range_max << " size: " << size << std::endl;
         if (cameraPos[0] < x_range_min || cameraPos[0] > x_range_max
             || cameraPos[2] < z_range_min || cameraPos[2] > z_range_max) {
-            std::cout << "Updating map..." << std::endl;
             x_start = static_cast<int>(cameraPos[0] - size / 2);
             z_start = static_cast<int>(cameraPos[2] - size / 2);
-            terrain.create_perline_noise(x_start, z_start, size, octs, random_seed);
-            terrain.rescale_noise(hight_max);
-            new_cube_positions.clear();
-            terrain.create_mountain(x_start, z_start, new_cube_positions, size);
-            cube_positions = update_cube_positions(cube_positions, new_cube_positions, modelMatrices);
+
+            std::thread map_thread(create_new_map_with_thread, terrain, x_start, z_start, size, octs,
+                random_seed, height_max, new_cube_positions, modelMatrices);
+            map_thread.join();
+
             x_range_min = static_cast<double>(x_start + size / 3);
             x_range_max = static_cast<double>(x_start + size / 3 * 2);
             z_range_min = static_cast<double>(z_start + size / 3);
             z_range_max = static_cast<double>(z_start + size / 3 * 2);
-            std::cout << "Map update completed !!" << std::endl;
         }
 
         // Configure instanced array
