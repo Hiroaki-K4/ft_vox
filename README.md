@@ -1,6 +1,9 @@
 # ft_vox
 In this repository, I created a voxel engine similar to Minecraft. The terrain is created randomly using procedural generation using [Perline noise](https://en.wikipedia.org/wiki/Perlin_noise#:~:text=Perlin%20noise%20is%20a%20procedural,details%20are%20the%20same%20size.), and an infite number of maps can be generated.
 
+## Related article I wrote
+- [Create a Minecraft-like Voxel Engine Using Procedural Generation](https://medium.com/@hirok4/create-a-minecraft-like-voxel-engine-using-procedural-generation-39dc9d696a3c)
+
 <br><br>
 
 ## Procedural generation
